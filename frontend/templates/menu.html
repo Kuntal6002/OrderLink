@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ seller.name }} – Menu</title>
+  <meta name="description" content="Order from {{ seller.name }} on WhatsApp" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: #f8f9fa;
+      min-height: 100vh;
+      padding-bottom: 100px;
+    }
+    h1, h2, h3, .display { font-family: 'Baloo 2', cursive; }
+
+    .hero {
+      background: linear-gradient(135deg, #FF6B35 0%, #ff8c42 60%, #ffb347 100%);
+      padding: 28px 20px 36px;
+    }
+
+    .item-card {
+      background: white;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      transition: box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+    .item-card.has-qty {
+      box-shadow: 0 4px 20px rgba(255,107,53,0.2);
+      outline: 2px solid #FF6B35;
+    }
+
+    .item-img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      background: linear-gradient(135deg, #ffe5d0, #ffd0a0);
+    }
+    .item-img-placeholder {
+      width: 100%;
+      height: 100px;
+      background: linear-gradient(135deg, #fff0e8, #ffe0cc);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+    }
+
+    .qty-control {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      background: #f4f4f4;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .qty-btn {
+      width: 38px;
+      height: 38px;
+      border: none;
+      background: transparent;
+      font-size: 1.3rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: #FF6B35;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      font-family: 'Baloo 2', cursive;
+      flex-shrink: 0;
+    }
+    .qty-btn:active { background: #ffe0cc; }
+    .qty-btn.add {
+      background: #FF6B35;
+      color: white;
+      border-radius: 0 10px 10px 0;
+    }
+    .qty-btn.add:active { background: #e55a25; }
+    .qty-display {
+      min-width: 32px;
+      text-align: center;
+      font-family: 'Baloo 2', cursive;
+      font-weight: 700;
+      font-size: 1rem;
+      color: #1a1a2e;
+    }
+
+    /* Sticky Order Bar */
+    .order-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      padding: 12px 16px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+      z-index: 100;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .order-bar.visible {
+      transform: translateY(0);
+    }
+
+    .btn-order {
+      background: linear-gradient(135deg, #25D366, #1ebe57);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      padding: 15px 20px;
+      font-family: 'Baloo 2', cursive;
+      font-weight: 700;
+      font-size: 1.05rem;
+      width: 100%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 16px rgba(37,211,102,0.4);
+      transition: transform 0.15s;
+    }
+    .btn-order:active { transform: scale(0.98); }
+
+    .badge {
+      background: rgba(255,255,255,0.25);
+      border-radius: 8px;
+      padding: 3px 10px;
+      font-size: 0.85rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #9ca3af;
+    }
+
+    .tag-veg {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid #22c55e;
+      border-radius: 3px;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .tag-veg::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 7px; height: 7px;
+      background: #22c55e;
+      border-radius: 50%;
+    }
+
+    .price-tag {
+      font-family: 'Baloo 2', cursive;
+      font-weight: 700;
+      color: #FF6B35;
+      font-size: 1.05rem;
+    }
+
+    .order-name-input {
+      width: 100%;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .order-name-input:focus { border-color: #25D366; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 24px 24px 0 0;
+      padding: 24px 20px 32px;
+      width: 100%;
+      max-width: 480px;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .btn-confirm {
+      background: linear-gradient(135deg, #25D366, #1ebe57);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      padding: 15px;
+      font-family: 'Baloo 2', cursive;
+      font-weight: 700;
+      font-size: 1rem;
+      width: 100%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-top: 16px;
+      box-shadow: 0 4px 14px rgba(37,211,102,0.35);
+    }
+    .btn-cancel {
+      background: #f3f4f6;
+      color: #6b7280;
+      border: none;
+      border-radius: 14px;
+      padding: 13px;
+      font-family: 'Baloo 2', cursive;
+      font-weight: 700;
+      font-size: 0.95rem;
+      width: 100%;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .copied-toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(40px);
+      background: #1a1a2e;
+      color: white;
+      padding: 8px 18px;
+      border-radius: 100px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 999;
+    }
+    .copied-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  </style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="flex items-center gap-3 mb-1">
+    <div class="w-12 h-12 bg-white bg-opacity-25 rounded-full flex items-center justify-center text-2xl">🍽️</div>
+    <div>
+      <h1 class="text-white font-extrabold text-2xl leading-tight">{{ seller.name }}</h1>
+      <p class="text-orange-100 text-sm font-semibold">📱 Order on WhatsApp</p>
+    </div>
+  </div>
+</div>
+
+<!-- Menu Items -->
+<div class="px-4 py-5 max-w-sm mx-auto">
+
+  {% if items %}
+    <p class="text-gray-500 text-xs font-bold uppercase tracking-wide mb-3">Menu ({{ items|length }} items)</p>
+
+    <div class="space-y-3">
+      {% for item in items %}
+      <div class="item-card" id="card-{{ item.id }}">
+        {% if item.image_url %}
+          <img src="{{ item.image_url }}" alt="{{ item.name }}" class="item-img" loading="lazy" onerror="this.parentNode.removeChild(this)" />
+        {% else %}
+          <div class="item-img-placeholder">🍴</div>
+        {% endif %}
+
+        <div class="p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex-1">
+              <h3 class="font-bold text-gray-800 text-base leading-tight">{{ item.name }}</h3>
+              <p class="price-tag mt-1">₹{{ "%.0f"|format(item.price) }}</p>
+            </div>
+            <!-- Qty Control -->
+            <div class="qty-control">
+              <button class="qty-btn minus" onclick="updateQty({{ item.id }}, -1)" id="minus-{{ item.id }}">−</button>
+              <span class="qty-display" id="qty-{{ item.id }}">0</span>
+              <button class="qty-btn add" onclick="updateQty({{ item.id }}, 1)">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  {% else %}
+    <div class="empty-state">
+      <div class="text-5xl mb-3">🕐</div>
+      <p class="font-bold text-gray-500 text-lg">Menu coming soon</p>
+      <p class="text-gray-400 text-sm mt-1">The seller is setting up their menu</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Sticky Order Bar -->
+<div class="order-bar" id="orderBar">
+  <div class="flex items-center justify-between mb-2">
+    <p class="text-xs text-gray-500 font-semibold"><span id="itemCount">0</span> item(s) selected</p>
+    <p class="font-bold text-gray-800">Total: <span class="text-orange-500" id="totalDisplay">₹0</span></p>
+  </div>
+  <button class="btn-order" onclick="openOrderModal()">
+    <span>
+      <svg style="display:inline;vertical-align:middle;margin-right:6px" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.855L0 24l6.335-1.502C8.04 23.456 9.983 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
+      Order on WhatsApp
+    </span>
+    <span class="badge" id="totalBadge">₹0</span>
+  </button>
+</div>
+
+<!-- Order Modal -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal">
+    <h2 class="text-lg font-bold text-gray-800 mb-1">Confirm Your Order</h2>
+    <p class="text-gray-500 text-sm mb-4">Your details will be sent with the order</p>
+
+    <label class="block text-gray-700 font-bold text-sm mb-2">Your Name <span class="text-red-400">*</span></label>
+    <input type="text" id="customerName" class="order-name-input mb-3" placeholder="e.g. Rahul Kumar" />
+
+    <label class="block text-gray-700 font-bold text-sm mb-2">Delivery Address <span class="text-red-400">*</span></label>
+    <input type="text" id="customerAddress" class="order-name-input mb-1" placeholder="e.g. Room 204, Hostel A" />
+
+    <div class="mt-4 p-3 bg-gray-50 rounded-2xl">
+      <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Order Summary</p>
+      <div id="orderSummary" class="space-y-1 text-sm text-gray-700"></div>
+      <div class="border-t border-gray-200 mt-2 pt-2 flex justify-between font-bold">
+        <span>Total</span>
+        <span class="text-orange-500" id="modalTotal">₹0</span>
+      </div>
+    </div>
+
+    <button class="btn-confirm" onclick="sendWhatsAppOrder()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.855L0 24l6.335-1.502C8.04 23.456 9.983 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
+      Send Order on WhatsApp
+    </button>
+    <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<div class="copied-toast" id="copiedToast">✅ Link copied!</div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────
+  const sellerPhone = "{{ seller.phone }}";
+  const sellerName = "{{ seller.name }}";
+
+  // Build item map from Jinja
+  const itemsData = {
+    {% for item in items %}
+    {{ item.id }}: { name: "{{ item.name|e }}", price: {{ item.price }} },
+    {% endfor %}
+  };
+
+  const quantities = {};  // item_id → quantity
+
+  // ── Quantity Control ───────────────────────────────────────────
+  function updateQty(itemId, delta) {
+    const current = quantities[itemId] || 0;
+    const next = Math.max(0, current + delta);
+    quantities[itemId] = next;
+
+    document.getElementById('qty-' + itemId).textContent = next;
+
+    // Visual feedback
+    const card = document.getElementById('card-' + itemId);
+    if (next > 0) {
+      card.classList.add('has-qty');
+    } else {
+      card.classList.remove('has-qty');
+    }
+
+    updateOrderBar();
+  }
+
+  // ── Order Bar ──────────────────────────────────────────────────
+  function updateOrderBar() {
+    let total = 0;
+    let count = 0;
+
+    for (const [id, qty] of Object.entries(quantities)) {
+      if (qty > 0) {
+        total += qty * itemsData[id].price;
+        count += qty;
+      }
+    }
+
+    document.getElementById('totalDisplay').textContent = '₹' + Math.round(total);
+    document.getElementById('totalBadge').textContent = '₹' + Math.round(total);
+    document.getElementById('itemCount').textContent = count;
+    document.getElementById('modalTotal').textContent = '₹' + Math.round(total);
+
+    const bar = document.getElementById('orderBar');
+    if (count > 0) {
+      bar.classList.add('visible');
+    } else {
+      bar.classList.remove('visible');
+    }
+  }
+
+  // ── Modal ──────────────────────────────────────────────────────
+  function openOrderModal() {
+    // Build summary
+    const summary = document.getElementById('orderSummary');
+    summary.innerHTML = '';
+
+    for (const [id, qty] of Object.entries(quantities)) {
+      if (qty > 0) {
+        const item = itemsData[id];
+        const subtotal = qty * item.price;
+        const row = document.createElement('div');
+        row.className = 'flex justify-between';
+        row.innerHTML = `<span>${qty} × ${item.name}</span><span class="font-semibold">₹${Math.round(subtotal)}</span>`;
+        summary.appendChild(row);
+      }
+    }
+
+    document.getElementById('orderModal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('orderModal').classList.remove('open');
+  }
+
+  // Close modal on overlay click
+  document.getElementById('orderModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // ── WhatsApp Message Generation ────────────────────────────────
+  function sendWhatsAppOrder() {
+    const customerName = document.getElementById('customerName').value.trim();
+    const customerAddress = document.getElementById('customerAddress').value.trim();
+
+    if (!customerName) {
+      document.getElementById('customerName').focus();
+      document.getElementById('customerName').style.borderColor = '#ef4444';
+      setTimeout(() => document.getElementById('customerName').style.borderColor = '', 2000);
+      return;
+    }
+    if (!customerAddress) {
+      document.getElementById('customerAddress').focus();
+      document.getElementById('customerAddress').style.borderColor = '#ef4444';
+      setTimeout(() => document.getElementById('customerAddress').style.borderColor = '', 2000);
+      return;
+    }
+
+    // Build order lines
+    let orderLines = [];
+    let total = 0;
+
+    for (const [id, qty] of Object.entries(quantities)) {
+      if (qty > 0) {
+        const item = itemsData[id];
+        const subtotal = qty * item.price;
+        total += subtotal;
+        orderLines.push(`• ${qty} × ${item.name} - ₹${Math.round(subtotal)}`);
+      }
+    }
+
+    if (orderLines.length === 0) return;
+
+    // Compose message (exact format required)
+    const message = [
+      `Hi 👋`,
+      `I want to order from *${sellerName}*:`,
+      ``,
+      orderLines.join('\n'),
+      ``,
+      `*Total: ₹${Math.round(total)}*`,
+      ``,
+      `Name: ${customerName}`,
+      `Address: ${customerAddress}`,
+    ].join('\n');
+
+    // Clean phone — remove non-digits except leading +
+    const cleanPhone = sellerPhone.replace(/[^+\d]/g, '');
+
+    // URL-encode properly
+    const encoded = encodeURIComponent(message);
+    const waUrl = `https://wa.me/${cleanPhone}?text=${encoded}`;
+
+    window.open(waUrl, '_blank');
+    closeModal();
+  }
+</script>
+</body>
+</html>

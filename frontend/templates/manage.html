@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manage Menu – {{ seller.name }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: #f8f9fa;
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+    h1, h2, h3 { font-family: 'Baloo 2', cursive; }
+
+    .hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      padding: 24px 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      padding: 20px;
+    }
+
+    .input-field {
+      width: 100%;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+      outline: none;
+      background: #fafafa;
+    }
+    .input-field:focus { border-color: #FF6B35; background: white; }
+
+    .btn-add {
+      background: linear-gradient(135deg, #FF6B35, #ff4500);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 13px 20px;
+      font-family: 'Baloo 2', cursive;
+      font-weight: 700;
+      font-size: 1rem;
+      width: 100%;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(255,107,53,0.35);
+      transition: transform 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-add:hover { transform: translateY(-1px); }
+    .btn-add:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .btn-wa {
+      background: linear-gradient(135deg, #25D366, #1ebe57);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 13px 20px;
+      font-family: 'Baloo 2', cursive;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: 0 4px 14px rgba(37,211,102,0.35);
+      width: 100%;
+    }
+
+    .item-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .item-row:last-child { border-bottom: none; }
+
+    .item-thumb {
+      width: 48px; height: 48px;
+      border-radius: 10px;
+      object-fit: cover;
+      background: #ffe5d0;
+      flex-shrink: 0;
+    }
+    .item-thumb-placeholder {
+      width: 48px; height: 48px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #ffe5d0, #ffd0a0);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .btn-delete {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      border: none;
+      background: #fee2e2;
+      color: #dc2626;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .btn-delete:hover { background: #fecaca; }
+
+    .link-box {
+      background: #f0fff4;
+      border: 2px dashed #25D366;
+      border-radius: 12px;
+      padding: 12px 14px;
+      word-break: break-all;
+      font-size: 0.85rem;
+      color: #1a7a40;
+      font-weight: 600;
+    }
+
+    .spinner {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      background: #1a1a2e;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 100px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 999;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    .empty-items {
+      text-align: center;
+      padding: 24px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="flex items-center gap-3">
+    <a href="/" class="text-white opacity-60 hover:opacity-100 text-xl">←</a>
+    <div>
+      <p class="text-orange-300 text-xs font-bold uppercase tracking-wide">Managing Menu</p>
+      <h1 class="text-white font-extrabold text-xl leading-tight">{{ seller.name }}</h1>
+    </div>
+  </div>
+</div>
+
+<div class="px-4 py-5 max-w-sm mx-auto space-y-4">
+
+  <!-- Share Link -->
+  <div class="card">
+    <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">📎 Your Menu Link</p>
+    <div class="link-box mb-3" id="menuLink"></div>
+    <div class="grid grid-cols-2 gap-2">
+      <button class="btn-wa text-sm py-2" onclick="copyLink()" style="font-size:0.85rem; padding:10px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy Link
+      </button>
+      <a id="viewMenuBtn" href="/menu/{{ seller.id }}" target="_blank"
+         class="btn-add text-sm py-2 no-underline text-center" style="font-size:0.85rem; padding:10px; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:6px;">
+        👁️ View Menu
+      </a>
+    </div>
+  </div>
+
+  <!-- Add Item Form -->
+  <div class="card">
+    <h2 class="text-lg font-bold text-gray-800 mb-4">➕ Add Menu Item</h2>
+
+    <div class="space-y-3 mb-4">
+      <div>
+        <label class="block text-sm font-bold text-gray-600 mb-1">Item Name <span class="text-red-400">*</span></label>
+        <input type="text" id="itemName" class="input-field" placeholder="e.g. Maggi, Chai, Biryani" />
+      </div>
+      <div>
+        <label class="block text-sm font-bold text-gray-600 mb-1">Price (₹) <span class="text-red-400">*</span></label>
+        <input type="number" id="itemPrice" class="input-field" placeholder="e.g. 30" min="1" step="0.5" />
+      </div>
+      <div>
+        <label class="block text-sm font-bold text-gray-600 mb-1">Image URL <span class="text-gray-400 font-normal">(optional)</span></label>
+        <input type="url" id="itemImage" class="input-field" placeholder="https://..." />
+      </div>
+    </div>
+
+    <button class="btn-add" id="addBtn" onclick="addItem()">
+      <span id="addBtnText">Add Item</span>
+      <div class="spinner" id="addSpinner"></div>
+    </button>
+  </div>
+
+  <!-- Items List -->
+  <div class="card">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-lg font-bold text-gray-800">📋 Your Menu</h2>
+      <span class="text-sm text-gray-400 font-semibold" id="itemCountLabel"></span>
+    </div>
+    <div id="itemsList">
+      {% if items %}
+        {% for item in items %}
+        <div class="item-row" id="row-{{ item.id }}">
+          {% if item.image_url %}
+            <img src="{{ item.image_url }}" class="item-thumb" onerror="this.style.display='none'" />
+          {% else %}
+            <div class="item-thumb-placeholder">🍴</div>
+          {% endif %}
+          <div class="flex-1 min-w-0">
+            <p class="font-bold text-gray-800 text-sm truncate">{{ item.name }}</p>
+            <p class="text-orange-500 font-bold text-sm">₹{{ "%.0f"|format(item.price) }}</p>
+          </div>
+          <button class="btn-delete" onclick="deleteItem({{ item.id }}, this)" title="Delete">🗑</button>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-items" id="emptyState">
+          <p class="text-3xl mb-2">🍽️</p>
+          <p class="font-bold">No items yet</p>
+          <p class="text-xs mt-1">Add your first item above!</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const SELLER_ID = "{{ seller.id }}";
+  const origin = window.location.origin;
+  const menuLink = `${origin}/menu/${SELLER_ID}`;
+
+  document.getElementById('menuLink').textContent = menuLink;
+
+  // Item count
+  function refreshCount() {
+    const rows = document.querySelectorAll('.item-row');
+    const label = document.getElementById('itemCountLabel');
+    label.textContent = rows.length > 0 ? `${rows.length} item(s)` : '';
+
+    const empty = document.getElementById('emptyState');
+    if (empty) empty.style.display = rows.length === 0 ? 'block' : 'none';
+  }
+  refreshCount();
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function copyLink() {
+    navigator.clipboard.writeText(menuLink).then(() => showToast('✅ Link copied!'));
+  }
+
+  async function addItem() {
+    const name = document.getElementById('itemName').value.trim();
+    const price = parseFloat(document.getElementById('itemPrice').value);
+    const imageUrl = document.getElementById('itemImage').value.trim();
+
+    if (!name) { document.getElementById('itemName').focus(); showToast('⚠️ Enter item name'); return; }
+    if (!price || price <= 0) { document.getElementById('itemPrice').focus(); showToast('⚠️ Enter a valid price'); return; }
+
+    const btn = document.getElementById('addBtn');
+    btn.disabled = true;
+    document.getElementById('addBtnText').style.display = 'none';
+    document.getElementById('addSpinner').style.display = 'block';
+
+    try {
+      const res = await fetch('/menu-item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seller_id: SELLER_ID, name, price, image_url: imageUrl || null })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        showToast('❌ ' + (err.detail || 'Error'));
+        return;
+      }
+
+      const item = await res.json();
+
+      // Clear form
+      document.getElementById('itemName').value = '';
+      document.getElementById('itemPrice').value = '';
+      document.getElementById('itemImage').value = '';
+
+      // Inject new row
+      const list = document.getElementById('itemsList');
+      const empty = document.getElementById('emptyState');
+      if (empty) empty.style.display = 'none';
+
+      const row = document.createElement('div');
+      row.className = 'item-row';
+      row.id = 'row-' + item.id;
+      row.innerHTML = `
+        ${item.image_url
+          ? `<img src="${item.image_url}" class="item-thumb" onerror="this.style.display='none'" />`
+          : `<div class="item-thumb-placeholder">🍴</div>`}
+        <div class="flex-1 min-w-0">
+          <p class="font-bold text-gray-800 text-sm truncate">${escapeHtml(item.name)}</p>
+          <p class="text-orange-500 font-bold text-sm">₹${Math.round(item.price)}</p>
+        </div>
+        <button class="btn-delete" onclick="deleteItem(${item.id}, this)" title="Delete">🗑</button>
+      `;
+      list.appendChild(row);
+      refreshCount();
+      showToast('✅ Item added!');
+
+    } catch (e) {
+      showToast('❌ Something went wrong');
+    } finally {
+      btn.disabled = false;
+      document.getElementById('addBtnText').style.display = 'inline';
+      document.getElementById('addSpinner').style.display = 'none';
+    }
+  }
+
+  async function deleteItem(itemId, btn) {
+    if (!confirm('Delete this item?')) return;
+    btn.disabled = true;
+
+    try {
+      const res = await fetch(`/menu-item/${itemId}?seller_id=${SELLER_ID}`, { method: 'DELETE' });
+      if (!res.ok) { showToast('❌ Could not delete'); return; }
+      const row = document.getElementById('row-' + itemId);
+      row.style.opacity = '0';
+      row.style.transition = 'opacity 0.3s';
+      setTimeout(() => { row.remove(); refreshCount(); }, 300);
+      showToast('🗑 Item removed');
+    } catch {
+      showToast('❌ Error deleting');
+      btn.disabled = false;
+    }
+  }
+
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.appendChild(document.createTextNode(str));
+    return d.innerHTML;
+  }
+
+  // Enter key for form
+  ['itemName', 'itemPrice', 'itemImage'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') addItem();
+    });
+  });
+</script>
+</body>
+</html>
